@@ -4,7 +4,7 @@
 #include <esp_wifi.h>
 #include <nvs_flash.h>
 #include <string.h>
-#include <sdcard_utils.h>>
+#include <sdcard_utils.h>
 
 #define WIFI_SSID "."
 #define WIFI_PASS "VQdaj5xXxz"

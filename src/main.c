@@ -34,10 +34,10 @@ void setup();
 #if !CONFIG_AUTOSTART_ARDUINO
 
 void app_main() {
-    sdcard_init();
-    sdcard_list_files("/sdcard");
-    web_server_init();
-    // setup();
+    //sdcard_init();
+    //sdcard_list_files("/sdcard");
+    //web_server_init();
+    setup();
 }
 
 #endif
@@ -101,7 +101,7 @@ void setup() {
     bsp_display_lock(0);
 
     // Inicializa Stream Deck custom
-    streamdeck_init();
+    create_streamdeck_ui();
 
     /* Release the mutex */
     bsp_display_unlock();
