@@ -3,12 +3,59 @@
 
 #define BUTTON_WIDTH 80
 #define BUTTON_HEIGHT 80
-#define BUTTON_COUNT 2
+#define BUTTON_COUNT 5
 
+// Função de fábrica para preencher uma estrutura bnt_action
+void create_button_data(bnt_action *button, const char *label, int position, ACTION_TYPE type, const char *action) {
+    strcpy(button->label, label);
+    button->position = position;
+    button->ACTION_TYPE = type;
+    strcpy(button->action, action);
+}
+
+void get_button_actions(bnt_action buttons[]) {
+    // Simulando a leitra do arquivo CSV do SD Card
+    // Este array de estruturas representa o conteúdo que seria lido do arquivo.
+
+    create_button_data(&buttons[0], "Volume +", 0, SHORTCUT, "VOLUME_UP");
+    create_button_data(&buttons[1], "Volume -", 1, SHORTCUT, "VOLUME_DOWN");
+    create_button_data(&buttons[2], "Teste 1", 2, SHORTCUT, "TEST");
+    create_button_data(&buttons[3], "Teste 2", 3, SHORTCUT, "TEST");
+    create_button_data(&buttons[4], "Teste 3", 4, SHORTCUT, "TEST");
+}
+
+lv_obj_t *create_button(lv_obj_t *parent, bnt_action *action_data) {
+    // Cria o objeto do botão
+    lv_obj_t *btn = lv_btn_create(parent);
+    lv_obj_set_size(btn, BUTTON_WIDTH, BUTTON_HEIGHT);
+
+    // Estilo dos botões
+    lv_obj_set_style_bg_color(btn, lv_color_hex(0x202121), LV_PART_MAIN);     // Fundo
+    lv_obj_set_style_shadow_color(btn, lv_color_hex(0xffffff), LV_PART_MAIN); // Sombra
+    lv_obj_set_style_shadow_width(btn, 10, LV_PART_MAIN);                     // Sombra
+    lv_obj_set_style_border_color(btn, lv_color_hex(0xffffff), LV_PART_MAIN); // Borda
+    lv_obj_set_style_border_width(btn, 1, LV_PART_MAIN);                      // Borda
+
+    // Estilo quando pressionado
+    lv_obj_set_style_bg_color(btn, lv_color_hex(0x282a2c), LV_PART_CURSOR);
+
+    // Cria o rótulo dentro do botão e define o texto
+    lv_obj_t *label = lv_label_create(btn);
+    lv_label_set_text(label, action_data->label);
+    lv_obj_center(label);
+
+    // Salva os dados da ação no botão
+    lv_obj_set_user_data(btn, (void *)action_data);
+
+    return btn;
+}
 
 void create_streamdeck_ui() {
     // Configura o display
     bsp_display_brightness_set(30);
+
+    bnt_action buttons[BUTTON_COUNT];
+    get_button_actions(buttons);
 
     // Tela ativa
     lv_obj_t *screen = lv_scr_act();
@@ -34,37 +81,8 @@ void create_streamdeck_ui() {
     lv_obj_set_style_border_width(container, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(container, 0, LV_PART_MAIN);
 
-    // Botões
-    bnt_action buttons[BUTTON_COUNT];
-    strcpy(buttons[0].action, "VOLUME_UP");
-    strcpy(buttons[0].label, "+");
-    buttons->ACTION_TYPE = SHORTCUT;
-    buttons->position = 0;
-
-    strcpy(buttons[1].action, "VOLUME_DOWN");
-    strcpy(buttons[1].label, "-");
-    buttons->ACTION_TYPE = SHORTCUT;
-    buttons->position = 1;
-    
-
     // Loop para criar os botões
     for (int i = 0; i < BUTTON_COUNT; i++) {
-        lv_obj_t *btn = lv_btn_create(container);
-        lv_obj_set_size(btn, BUTTON_WIDTH, BUTTON_HEIGHT);
-
-        // Estilo dos botões
-        lv_obj_set_style_bg_color(btn, lv_color_hex(0x202121), LV_PART_MAIN);     // Fundo
-        lv_obj_set_style_shadow_color(btn, lv_color_hex(0xffffff), LV_PART_MAIN); // Sombra
-        lv_obj_set_style_shadow_width(btn, 10, LV_PART_MAIN);                     // Sombra
-        lv_obj_set_style_border_color(btn, lv_color_hex(0xffffff), LV_PART_MAIN); // Borda
-        lv_obj_set_style_border_width(btn, 1, LV_PART_MAIN);                      // Borda
-
-        // Pressed
-        lv_obj_set_style_bg_color(btn, lv_color_hex(0x282a2c), LV_PART_CURSOR);
-
-        // Cria um rótulo dentro do botão
-        lv_obj_t *label = lv_label_create(btn);
-        lv_label_set_text(label, buttons[i].label);
-        lv_obj_center(label);
+        create_button(container, &buttons[i]);
     }
 }
