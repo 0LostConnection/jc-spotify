@@ -18,7 +18,7 @@ static lv_style_t style_buttons;
 // --- LABELS ---
 static lv_obj_t *brightness_label = NULL;
 
-// --- Inicio Mock ---
+// --- INICIO MOCK ---
 
 // Função de fábrica para preencher uma estrutura bnt_action
 void create_button_data(bnt_action *button, const char *label, ACTION_TYPE type, const char *action) {
@@ -37,7 +37,7 @@ void get_button_actions(bnt_action buttons[]) {
     create_button_data(&buttons[4], "Teste 3", SHORTCUT, "TEST_3");
 }
 
-// --- Fim Mock ---
+// --- FIM MOCK ---
 
 void update_brightness_label(int value) {
     char buf[13];
@@ -120,7 +120,7 @@ void create_streamdeck_ui() {
     bnt_action buttons[BUTTON_COUNT];
     get_button_actions(buttons);
 
-    // --- Inicio da Criação da Tela ---
+    // --- INICIO DA CRIAÇÃO DA TELA ---
 
     // --- Tela Raiz ---
     lv_obj_t *screen = lv_scr_act();
@@ -177,7 +177,7 @@ void create_streamdeck_ui() {
         }
     }
 
-    // --- Fim da Criação da Tela ---
+    // --- FIM DA CRIAÇÃO DA TELA ---
 
     // --- Configure Display Brightness and Update Label ---
     bsp_display_brightness_set(brightness);
