@@ -5,6 +5,10 @@
         "display.h": "c",
         "usb_helpers.h": "c",
         "adafruit_tinyusb.h": "c",
-        "esp_bsp.h": "c"
+        "esp_bsp.h": "c",
+        "streamdeck_screen.h": "c",
+        "lvgl.h": "c",
+        "buttons.h": "c",
+        "styles.h": "c"
     }
 }

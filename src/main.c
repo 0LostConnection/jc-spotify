@@ -7,7 +7,7 @@
 #include <esp_log.h> // Add this line to include the header file that declares ESP_LOGI
 #include <esp_system.h>
 #include <lvgl.h>
-#include <screens/streamdeck.h>
+#include <screens/streamdeck_screen.h>
 
 static const char *TAG = "STREAMDECK";
 
@@ -98,8 +98,9 @@ void setup() {
     /* Lock the mutex due to the LVGL APIs are not thread-safe */
     bsp_display_lock(0);
 
-    // Inicializa Stream Deck custom
-    create_streamdeck_ui();
+    // Inicializa tela Stream Deck
+    lv_obj_t *streamdeck_screen = create_streamdeck_ui();
+    lv_disp_load_scr(streamdeck_screen);
 
     /* Release the mutex */
     bsp_display_unlock();
