@@ -1,15 +1,13 @@
-#include "display.h"
-#include "esp_bsp.h"
-#include "lv_port.h"
+#include "esp/display.h"
+#include "esp/esp_bsp.h"
+#include "esp/lv_port.h"
 #include <esp_chip_info.h>
 #include <esp_flash.h> // Add this line to include the header file that declares esp_flash_t
 #include <esp_heap_caps.h>
 #include <esp_log.h> // Add this line to include the header file that declares ESP_LOGI
 #include <esp_system.h>
 #include <lvgl.h>
-#include <streamdeck.h>
-#include <web_server.h>
-#include <sdcard_utils.h>
+#include <screens/streamdeck.h>
 
 static const char *TAG = "STREAMDECK";
 

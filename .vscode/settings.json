@@ -4,6 +4,7 @@
         "sdcard_utils.h": "c",
         "display.h": "c",
         "usb_helpers.h": "c",
-        "adafruit_tinyusb.h": "c"
+        "adafruit_tinyusb.h": "c",
+        "esp_bsp.h": "c"
     }
 }
