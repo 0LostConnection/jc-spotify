@@ -6,7 +6,7 @@
 // Definições de tamanho e quantidade de botões
 #define BUTTON_WIDTH 80
 #define BUTTON_HEIGHT 80
-#define BUTTON_COUNT 5
+#define BUTTON_COUNT 10
 
 // Estado da aplicação
 int brightness = 30;
@@ -17,6 +17,9 @@ static lv_style_t style_buttons;
 
 // --- LABELS ---
 static lv_obj_t *brightness_label = NULL;
+
+// --- Buttons ---
+static bnt_action buttons[BUTTON_COUNT];
 
 // --- INICIO MOCK ---
 
@@ -34,7 +37,12 @@ void get_button_actions(bnt_action buttons[]) {
     create_button_data(&buttons[1], "B-", SYSTEM, "BRIGHTNESS_DOWN");
     create_button_data(&buttons[2], "Teste 1", SHORTCUT, "TEST_1");
     create_button_data(&buttons[3], "Teste 2", SHORTCUT, "TEST_2");
-    create_button_data(&buttons[4], "Teste 3", SHORTCUT, "TEST_3");
+    create_button_data(&buttons[4], "Teste 4", SHORTCUT, "TEST_3");
+    create_button_data(&buttons[5], "Teste 5", SHORTCUT, "TEST_3");
+    create_button_data(&buttons[6], "Teste 6", SHORTCUT, "TEST_3");
+    create_button_data(&buttons[7], "Teste 7", SHORTCUT, "TEST_3");
+    create_button_data(&buttons[8], "Teste 8", SHORTCUT, "TEST_3");
+    create_button_data(&buttons[9], "Teste 9", SHORTCUT, "TEST_3");
 }
 
 // --- FIM MOCK ---
@@ -51,7 +59,7 @@ static void button_event_handler(lv_event_t *event) {
 
     if (!action_data)
         return;
-
+    
     switch (action_data->ACTION_TYPE) {
     case SHORTCUT:
         printf("Acao de atalho: %s\n", action_data->action);
@@ -67,11 +75,10 @@ static void button_event_handler(lv_event_t *event) {
                 return;
             bsp_display_brightness_set((brightness -= 5));
             update_brightness_label(brightness);
-            
         }
         break;
     default:
-        printf("Tipo de acao nao reconhecida.\n");
+        printf("'%d' - '%s': Tipo de acao nao reconhecida.\n", action_data->ACTION_TYPE, action_data->action);
         break;
     }
 }
@@ -117,7 +124,6 @@ void create_streamdeck_ui() {
     init_styles();
 
     // --- Get botões
-    bnt_action buttons[BUTTON_COUNT];
     get_button_actions(buttons);
 
     // --- INICIO DA CRIAÇÃO DA TELA ---
