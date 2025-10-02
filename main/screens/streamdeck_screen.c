@@ -1,4 +1,7 @@
 #include "streamdeck_screen.h"
+#include "keyboard.h"
+#include "shortcut_handler.h"
+#include "usb_service.h"
 
 // Definições de tamanho e quantidade de botões
 #define BUTTON_WIDTH 80
@@ -10,44 +13,36 @@ static bnt_action buttons[BUTTON_COUNT];
 
 // --- INICIO MOCK ---
 
-// Funções para simular a leitura do SD Card e obter as ações dos botões
-void get_button_actions(bnt_action buttons[]) {
-    // Simulando a leitura do arquivo CSV do SD Card
-    create_button_data(&buttons[0], "C", SCREEN, "CONFIG");
-    create_button_data(&buttons[1], "Teste 1", SHORTCUT, "TEST_1");
-    create_button_data(&buttons[2], "Teste 2", SHORTCUT, "TEST_2");
-    create_button_data(&buttons[3], "Teste 4", SHORTCUT, "TEST_3");
-    create_button_data(&buttons[4], "Teste 5", SHORTCUT, "TEST_3");
-    create_button_data(&buttons[5], "Teste 6", SHORTCUT, "TEST_3");
-    create_button_data(&buttons[6], "Teste 7", SHORTCUT, "TEST_3");
-    create_button_data(&buttons[7], "Teste 8", SHORTCUT, "TEST_3");
-    create_button_data(&buttons[8], "Teste 9", SHORTCUT, "TEST_3");
-}
-
 static void button_event_handler(lv_event_t *event) {
     lv_obj_t *btn = lv_event_get_target(event);
     bnt_action *action_data = (bnt_action *)lv_obj_get_user_data(btn);
-
-    if (!action_data)
-        return;
+    if (!action_data) return;
 
     switch (action_data->type) {
-    case SCREEN:
-        lv_obj_t *config_screen = create_config_ui();
-        lv_disp_load_scr(config_screen);
-        break;
-    case SHORTCUT:
-        printf("Acao de atalho: %s\n", action_data->action);
-        break;
-    case SYSTEM:
-        if (strcmp(action_data->action, "BRIGHTNESS_UP") == 0) {
-
-        } else if (strcmp(action_data->action, "BRIGHTNESS_DOWN") == 0) {
-        }
-        break;
-    default:
-        printf("'%d' - '%s': Tipo de acao nao reconhecida.\n", action_data->type, action_data->action);
-        break;
+        case SCREEN: {
+            lv_obj_t *config_screen = create_config_ui();
+            lv_disp_load_scr(config_screen);
+        } break;
+        case SHORTCUT: {
+            // Enfileira atalho para processamento assíncrono
+            esp_err_t r = shortcut_enqueue(action_data->action, 0);
+            if (r != ESP_OK) {
+                printf("Fila cheia ou erro ao enfileirar atalho '%s'\n", action_data->action);
+            } else {
+                printf("Atalho enfileirado: %s\n", action_data->action);
+            }
+        } break;
+        case SYSTEM: {
+            if (strcmp(action_data->action, "BRIGHTNESS_UP") == 0) {
+                // ...
+            } else if (strcmp(action_data->action, "BRIGHTNESS_DOWN") == 0) {
+                // ...
+            }
+        } break;
+        default:
+            printf("'%d' - '%s': Tipo de ação nao reconhecida.\n",
+                   action_data->type, action_data->action);
+            break;
     }
 }
 

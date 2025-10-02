@@ -13,7 +13,6 @@ static lv_obj_t *brightness_label = NULL;
 
 // --- FIM MOCK ---
 
-
 void update_brightness_label(int value) {
     char buf[20];
     lv_snprintf(buf, sizeof(buf), "Brilho: %d%%", value);
@@ -26,12 +25,14 @@ static void brightness_button_event_cb(lv_event_t *event) {
     if (strcmp(label, "B+") == 0) {
         if (brightness < 100) {
             brightness += 5;
-            if (brightness > 100) brightness = 100;
+            if (brightness > 100)
+                brightness = 100;
         }
     } else if (strcmp(label, "B-") == 0) {
         if (brightness > 0) {
             brightness -= 5;
-            if (brightness < 0) brightness = 0;
+            if (brightness < 0)
+                brightness = 0;
         }
     }
     bsp_display_brightness_set(brightness);
@@ -49,7 +50,7 @@ lv_obj_t *create_config_ui() {
     // --- Init Styles ---
     init_styles();
 
-    // --- INICIO DA CRIAÇÃO DA TELA --- 
+    // --- INICIO DA CRIAÇÃO DA TELA ---
 
     // --- Tela Raiz ---
     lv_obj_t *screen = lv_obj_create(NULL);
@@ -97,9 +98,8 @@ lv_obj_t *create_config_ui() {
     // --- Label Brilho ---
     brightness_label = lv_label_create(main_content_container);
     lv_obj_set_style_text_color(brightness_label, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_text_font(brightness_label, &lv_font_montserrat_18, 0);
+    //lv_obj_set_style_text_font(brightness_label, &lv_font_montserrat_18, 0);
     update_brightness_label(brightness);
-
 
     // --- Botões de Brilho ---
     lv_obj_t *row = lv_obj_create(main_content_container);
@@ -128,7 +128,6 @@ lv_obj_t *create_config_ui() {
     // --- FIM DA CRIAÇÃO DA TELA ---
 
     // --- Configure Display Brightness and Update Label ---
-    bsp_display_brightness_set(brightness);
     update_brightness_label(brightness);
 
     return screen;

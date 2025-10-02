@@ -1,6 +1,9 @@
 #include "esp/display.h"
 #include "esp/esp_bsp.h"
 #include "esp/lv_port.h"
+#include "keyboard.h"
+#include "shortcut_handler.h"
+#include "usb_service.h"
 #include <esp_chip_info.h>
 #include <esp_flash.h> // Add this line to include the header file that declares esp_flash_t
 #include <esp_heap_caps.h>
@@ -32,16 +35,15 @@ void setup();
 #if !CONFIG_AUTOSTART_ARDUINO
 
 void app_main() {
-    //sdcard_init();
-    //sdcard_list_files("/sdcard");
-    //web_server_init();
+    // sdcard_init();
+    // sdcard_list_files("/sdcard");
+    // web_server_init();
     setup();
 }
 
 #endif
 
 void setup() {
-
     esp_chip_info_t chip_info;
     uint32_t flash_size;
 
@@ -91,13 +93,27 @@ void setup() {
 #endif
     };
 
+    ESP_LOGI(TAG, "Inicializando TinyUSB...");
+    tusb_init();
+
+    // Inicia serviço USB (mantém tud_task rodando)
+    usb_service_start();
+
+    // Inicializa módulo de envio de teclas (espera até 3000 ms montagem)
+    kb_init(3000);
+
+    // Inicializa shortcut handler (fila de 16 eventos)
+    shortcut_handler_init(16);
+    shortcut_set_timings(40, 500); // press 40ms, espera interface 500ms
+    shortcut_enable_debug(true);   // logs de debug
+
     bsp_display_start_with_config(&cfg);
     bsp_display_backlight_on();
+    bsp_display_brightness_set(30);
 
     logSection("Create UI");
     /* Lock the mutex due to the LVGL APIs are not thread-safe */
     bsp_display_lock(0);
-
     // Inicializa tela Stream Deck
     lv_obj_t *streamdeck_screen = create_streamdeck_ui();
     lv_disp_load_scr(streamdeck_screen);
