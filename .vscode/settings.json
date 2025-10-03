@@ -9,6 +9,18 @@
         "streamdeck_screen.h": "c",
         "lvgl.h": "c",
         "buttons.h": "c",
-        "styles.h": "c"
+        "styles.h": "c",
+        "esp_log.h": "c",
+        "keyboard.h": "c",
+        "task.h": "c",
+        "hid.h": "c",
+        "usb_service.h": "c",
+        "freertos.h": "c",
+        "config_screen.h": "c",
+        "esp_system.h": "c",
+        "esp_heap_caps.h": "c",
+        "lv_port.h": "c",
+        "esp_chip_info.h": "c",
+        "gpio.h": "c"
     }
 }

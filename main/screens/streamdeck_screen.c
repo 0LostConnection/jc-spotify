@@ -8,45 +8,35 @@
 // --- Buttons ---
 static bnt_action buttons[BUTTON_COUNT];
 
-// --- INICIO MOCK ---
+static lv_obj_t *test_label;
 
-// Funções para simular a leitura do SD Card e obter as ações dos botões
-void get_button_actions(bnt_action buttons[]) {
-    // Simulando a leitura do arquivo CSV do SD Card
-    create_button_data(&buttons[0], "C", SCREEN, "CONFIG");
-    create_button_data(&buttons[1], "Teste 1", SHORTCUT, "TEST_1");
-    create_button_data(&buttons[2], "Teste 2", SHORTCUT, "TEST_2");
-    create_button_data(&buttons[3], "Teste 4", SHORTCUT, "TEST_3");
-    create_button_data(&buttons[4], "Teste 5", SHORTCUT, "TEST_3");
-    create_button_data(&buttons[5], "Teste 6", SHORTCUT, "TEST_3");
-    create_button_data(&buttons[6], "Teste 7", SHORTCUT, "TEST_3");
-    create_button_data(&buttons[7], "Teste 8", SHORTCUT, "TEST_3");
-    create_button_data(&buttons[8], "Teste 9", SHORTCUT, "TEST_3");
-}
+// --- INICIO MOCK ---
 
 static void button_event_handler(lv_event_t *event) {
     lv_obj_t *btn = lv_event_get_target(event);
     bnt_action *action_data = (bnt_action *)lv_obj_get_user_data(btn);
-
     if (!action_data)
         return;
 
     switch (action_data->type) {
-    case SCREEN:
+    case SCREEN: {
         lv_obj_t *config_screen = create_config_ui();
         lv_disp_load_scr(config_screen);
-        break;
-    case SHORTCUT:
-        printf("Acao de atalho: %s\n", action_data->action);
-        break;
-    case SYSTEM:
+    } break;
+    case SHORTCUT: {
+        uint8_t keys[] = {HID_KEY_VOLUME_UP}; // DEL
+        lv_label_set_text(test_label, hid_send_shortcut(0, keys, 1) ? "true" : "false");
+    } break;
+    case SYSTEM: {
         if (strcmp(action_data->action, "BRIGHTNESS_UP") == 0) {
-
+            // ...
         } else if (strcmp(action_data->action, "BRIGHTNESS_DOWN") == 0) {
+            // ...
         }
-        break;
+    } break;
     default:
-        printf("'%d' - '%s': Tipo de acao nao reconhecida.\n", action_data->type, action_data->action);
+        printf("'%d' - '%s': Tipo de ação nao reconhecida.\n",
+               action_data->type, action_data->action);
         break;
     }
 }
@@ -94,6 +84,8 @@ lv_obj_t *create_streamdeck_ui() {
     lv_obj_set_flex_grow(main_content_container, 1); // Permite que ele cresça e preencha a altura
     lv_obj_set_style_pad_row(main_content_container, 10, LV_PART_MAIN);
     lv_obj_set_style_pad_column(main_content_container, 10, LV_PART_MAIN);
+
+    test_label = lv_label_create(button_row_container);
 
     // --- Loop para a Criação dos Botões ---
 

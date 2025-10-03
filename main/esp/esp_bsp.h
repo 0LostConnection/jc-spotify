@@ -1,4 +1,3 @@
-
 /*
  * SPDX-FileCopyrightText: 2022-2024 Espressif Systems (Shanghai) CO LTD
  *
@@ -12,39 +11,39 @@
 
 #pragma once
 
-#include "sdkconfig.h"
 #include "driver/gpio.h"
 #include "driver/i2c.h"
-#include "lvgl.h"
 #include "lv_port.h"
+#include "lvgl.h"
+#include "sdkconfig.h"
 
 /**************************************************************************************************
  *  pinout
  **************************************************************************************************/
-#define BSP_I2C_NUM                     (I2C_NUM_0)
-#define BSP_I2C_CLK_SPEED_HZ            400000
+#define BSP_I2C_NUM (I2C_NUM_0)
+#define BSP_I2C_CLK_SPEED_HZ 400000
 
-#define EXAMPLE_LCD_QSPI_HOST           (SPI2_HOST)
+#define EXAMPLE_LCD_QSPI_HOST (SPI2_HOST)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////// LCD spec of QSPI /////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define EXAMPLE_PIN_NUM_QSPI_CS         (GPIO_NUM_45)
-#define EXAMPLE_PIN_NUM_QSPI_PCLK       (GPIO_NUM_47)
-#define EXAMPLE_PIN_NUM_QSPI_DATA0      (GPIO_NUM_21)
-#define EXAMPLE_PIN_NUM_QSPI_DATA1      (GPIO_NUM_48)
-#define EXAMPLE_PIN_NUM_QSPI_DATA2      (GPIO_NUM_40)
-#define EXAMPLE_PIN_NUM_QSPI_DATA3      (GPIO_NUM_39)
-#define EXAMPLE_PIN_NUM_QSPI_RST        (GPIO_NUM_NC)
-#define EXAMPLE_PIN_NUM_QSPI_DC         (GPIO_NUM_8)
-#define EXAMPLE_PIN_NUM_QSPI_TE         (GPIO_NUM_38)
-#define EXAMPLE_PIN_NUM_QSPI_BL         (GPIO_NUM_1)
+#define EXAMPLE_PIN_NUM_QSPI_CS (GPIO_NUM_45)
+#define EXAMPLE_PIN_NUM_QSPI_PCLK (GPIO_NUM_47)
+#define EXAMPLE_PIN_NUM_QSPI_DATA0 (GPIO_NUM_21)
+#define EXAMPLE_PIN_NUM_QSPI_DATA1 (GPIO_NUM_48)
+#define EXAMPLE_PIN_NUM_QSPI_DATA2 (GPIO_NUM_40)
+#define EXAMPLE_PIN_NUM_QSPI_DATA3 (GPIO_NUM_39)
+#define EXAMPLE_PIN_NUM_QSPI_RST (GPIO_NUM_NC)
+#define EXAMPLE_PIN_NUM_QSPI_DC (GPIO_NUM_8)
+#define EXAMPLE_PIN_NUM_QSPI_TE (GPIO_NUM_38)
+#define EXAMPLE_PIN_NUM_QSPI_BL (GPIO_NUM_1)
 
-#define EXAMPLE_PIN_NUM_QSPI_TOUCH_SCL  (GPIO_NUM_8)
-#define EXAMPLE_PIN_NUM_QSPI_TOUCH_SDA  (GPIO_NUM_4)
-#define EXAMPLE_PIN_NUM_QSPI_TOUCH_RST  (-1)
-#define EXAMPLE_PIN_NUM_QSPI_TOUCH_INT  (-1)
+#define EXAMPLE_PIN_NUM_QSPI_TOUCH_SCL (GPIO_NUM_8)
+#define EXAMPLE_PIN_NUM_QSPI_TOUCH_SDA (GPIO_NUM_4)
+#define EXAMPLE_PIN_NUM_QSPI_TOUCH_RST (-1)
+#define EXAMPLE_PIN_NUM_QSPI_TOUCH_INT (-1)
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,9 +53,9 @@ extern "C" {
  *
  */
 typedef struct {
-    lvgl_port_cfg_t lvgl_port_cfg;  /*!< Configuration for the LVGL port */
-    uint32_t buffer_size;           /*!< Size of the buffer for the screen in pixels */
-    lv_disp_rot_t rotate;           /*!< Rotation configuration for the display */
+    lvgl_port_cfg_t lvgl_port_cfg; /*!< Configuration for the LVGL port */
+    uint32_t buffer_size;          /*!< Size of the buffer for the screen in pixels */
+    lv_disp_rot_t rotate;          /*!< Rotation configuration for the display */
 } bsp_display_cfg_t;
 
 /**
