@@ -15,8 +15,6 @@
 // --- Buttons ---
 static bnt_action buttons[BUTTON_COUNT];
 
-static lv_obj_t *test_label;
-
 // --- INICIO MOCK ---
 
 static void button_event_handler(lv_event_t *event) {
@@ -29,21 +27,56 @@ static void button_event_handler(lv_event_t *event) {
     case SCREEN: {
         lv_obj_t *config_screen = create_config_ui();
         lv_disp_load_scr(config_screen);
-    } break;
+        break;
+    }
+
     case SHORTCUT: {
-        uint8_t keys[] = {HID_KEY_VOLUME_UP}; // DEL
-        lv_label_set_text(test_label, hid_send_shortcut(0, keys, 1) ? "true" : "false");
-    } break;
-    case SYSTEM: {
-        if (strcmp(action_data->action, "BRIGHTNESS_UP") == 0) {
-            // ...
-        } else if (strcmp(action_data->action, "BRIGHTNESS_DOWN") == 0) {
-            // ...
+        if (strcmp(action_data->action, "MUTE") == 0) {
+            uint8_t keys[] = {HID_KEY_MUTE};
+            hid_send_shortcut(0, keys, 1);
+            break;
         }
-    } break;
+        if (strcmp(action_data->action, "VOLUME_UP") == 0) {
+            uint8_t keys[] = {HID_KEY_VOLUME_UP};
+            hid_send_shortcut(0, keys, 1);
+            break;
+        }
+        if (strcmp(action_data->action, "VOLUME_DOWN") == 0) {
+            uint8_t keys[] = {HID_KEY_VOLUME_DOWN};
+            hid_send_shortcut(0, keys, 1);
+            break;
+        }
+        if (strcmp(action_data->action, "PLAY_PAUSE") == 0) {
+            hid_send_consumer_key(HID_USAGE_CONSUMER_PLAY_PAUSE);
+            break;
+        }
+        if (strcmp(action_data->action, "CTRL_Z") == 0) {
+            uint8_t keys[] = {HID_KEY_Z};
+            hid_send_shortcut(KEYBOARD_MODIFIER_LEFTCTRL, keys, 1);
+            break;
+        }
+        if (strcmp(action_data->action, "CTRL_C") == 0) {
+            uint8_t keys[] = {HID_KEY_C};
+            hid_send_shortcut(KEYBOARD_MODIFIER_LEFTCTRL, keys, 1);
+            break;
+        }
+        if (strcmp(action_data->action, "CTRL_V") == 0) {
+            uint8_t keys[] = {HID_KEY_V};
+            hid_send_shortcut(KEYBOARD_MODIFIER_LEFTCTRL, keys, 1);
+            break;
+        }
+        if (strcmp(action_data->action, "CTRL_A") == 0) {
+            uint8_t keys[] = {HID_KEY_A};
+            hid_send_shortcut(KEYBOARD_MODIFIER_LEFTCTRL, keys, 1);
+            break;
+        }
+    }
+
+    case SYSTEM: {
+        break;
+    }
+
     default:
-        printf("'%d' - '%s': Tipo de ação nao reconhecida.\n",
-               action_data->type, action_data->action);
         break;
     }
 }
@@ -53,7 +86,7 @@ lv_obj_t *create_streamdeck_ui() {
     init_styles();
 
     // --- Get botões
-    get_button_actions(buttons);
+    int button_count = read_button_actions_from_csv(buttons);
 
     // --- INICIO DA CRIAÇÃO DA TELA ---
 
@@ -92,11 +125,9 @@ lv_obj_t *create_streamdeck_ui() {
     lv_obj_set_style_pad_row(main_content_container, 10, LV_PART_MAIN);
     lv_obj_set_style_pad_column(main_content_container, 10, LV_PART_MAIN);
 
-    test_label = lv_label_create(button_row_container);
-
     // --- Loop para a Criação dos Botões ---
 
-    for (int i = 0; i < BUTTON_COUNT; i++) {
+    for (int i = 0; i < button_count; i++) {
         switch (buttons[i].type) {
         case SCREEN:
             create_button(button_row_container, button_event_handler, &buttons[i], 34, 34);

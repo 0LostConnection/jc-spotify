@@ -23,6 +23,7 @@
         "esp_chip_info.h": "c",
         "gpio.h": "c",
         "sd_util.h": "c",
-        "atomic": "c"
+        "atomic": "c",
+        "esp_err.h": "c"
     }
 }

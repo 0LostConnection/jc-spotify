@@ -9,6 +9,9 @@
 #include "esp_system.h"
 
 #include "lvgl.h"
+
+#include "streamdeck_config.h"
+
 #include "screens/streamdeck_screen.h"
 
 #include "class/hid/hid_device.h"
@@ -16,6 +19,7 @@
 #include "tinyusb.h"
 #include "tinyusb_default_config.h"
 #include "utils/hid_util.h"
+#include "utils/sd_util.h"
 
 #include <stdlib.h>
 
@@ -37,6 +41,8 @@ static const char *TAG = "STREAMDECK";
  */
 #define LVGL_PORT_ROTATION_DEGREE (90)
 
+void boot_info();
+void setup_hid_usb();
 void setup();
 
 /************* TinyUSB descriptors ****************/
@@ -105,11 +111,26 @@ uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_t
 void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t const *buffer, uint16_t bufsize) {
 }
 
-void app_main() {
-    setup();
+void setup_hid_usb() {
+    ESP_LOGI(TAG, "USB initialization");
+    tinyusb_config_t tusb_cfg = TINYUSB_DEFAULT_CONFIG();
+
+    tusb_cfg.descriptor.device = NULL;
+    tusb_cfg.descriptor.full_speed_config = hid_configuration_descriptor;
+    tusb_cfg.descriptor.string = hid_string_descriptor;
+    tusb_cfg.descriptor.string_count = sizeof(hid_string_descriptor) / sizeof(hid_string_descriptor[0]);
+#if (TUD_OPT_HIGH_SPEED)
+    tusb_cfg.descriptor.high_speed_config = hid_configuration_descriptor;
+#endif // TUD_OPT_HIGH_SPEED
+
+    ESP_ERROR_CHECK(tinyusb_driver_install(&tusb_cfg));
+    ESP_LOGI(TAG, "USB initialization DONE");
+
+    // 2. Inicialize o utilitário HID (após USB)
+    hid_util_init();
 }
 
-void setup() {
+void boot_info() {
     esp_chip_info_t chip_info;
     uint32_t flash_size;
 
@@ -140,24 +161,23 @@ void setup() {
     size_t freePsram = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
 
     ESP_LOGI(TAG, "Free PSRAM: %d bytes", freePsram);
+}
 
-    ESP_LOGI(TAG, "USB initialization");
-    tinyusb_config_t tusb_cfg = TINYUSB_DEFAULT_CONFIG();
+void sd_init() {
+    ESP_ERROR_CHECK(sd_util_init());
+}
 
-    tusb_cfg.descriptor.device = NULL;
-    tusb_cfg.descriptor.full_speed_config = hid_configuration_descriptor;
-    tusb_cfg.descriptor.string = hid_string_descriptor;
-    tusb_cfg.descriptor.string_count = sizeof(hid_string_descriptor) / sizeof(hid_string_descriptor[0]);
-#if (TUD_OPT_HIGH_SPEED)
-    tusb_cfg.descriptor.high_speed_config = hid_configuration_descriptor;
-#endif // TUD_OPT_HIGH_SPEED
+void app_main() {
+    vTaskDelay(pdMS_TO_TICKS(10000));
+    boot_info();
+    sd_init();
+    vTaskDelay(pdMS_TO_TICKS(5000));
+    setup_hid_usb();
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    setup();
+}
 
-    ESP_ERROR_CHECK(tinyusb_driver_install(&tusb_cfg));
-    ESP_LOGI(TAG, "USB initialization DONE");
-
-    // 2. Inicialize o utilitário HID (após USB)
-    hid_util_init();
-
+void setup() {
     logSection("Initialize panel device");
 
     ESP_LOGI(TAG, "Initialize panel device");

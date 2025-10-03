@@ -3,7 +3,9 @@
 #include "esp_log.h"
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
+#include "streamdeck_config.h"
 #include <dirent.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -32,6 +34,16 @@ esp_err_t sd_util_init(void) {
     }
     ESP_LOGI(TAG, "Cartão SD montado.");
     sdmmc_card_print_info(stdout, sd_card);
+
+#ifdef FORMAT_ON_BOOT
+    // Supondo que você já montou o cartão SD e tem o ponteiro sdmmc_card_t *card
+    esp_err_t res = esp_vfs_fat_sdcard_format("/sdcard", sd_card);
+    if (res == ESP_OK) {
+        ESP_LOGI(TAG, "Cartão SD formatado com sucesso!");
+    } else {
+        ESP_LOGE(TAG, "Erro ao formatar cartão SD: %s", esp_err_to_name(res));
+    }
+#endif
     return ESP_OK;
 }
 
