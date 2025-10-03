@@ -2,8 +2,6 @@
 #define BUTTONS_H
 
 #include "lvgl.h"
-#include <esp/display.h>
-#include "styles.h"
 
 typedef enum {
     SCREEN = 0,

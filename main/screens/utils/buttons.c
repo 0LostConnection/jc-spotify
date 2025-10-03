@@ -1,4 +1,6 @@
 #include "buttons.h"
+#include "styles.h"
+#include <esp/display.h>
 
 // Funções para simular a leitura do SD Card e obter as ações dos botões
 void get_button_actions(bnt_action buttons[]) {
