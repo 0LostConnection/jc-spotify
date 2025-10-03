@@ -21,6 +21,8 @@
         "esp_heap_caps.h": "c",
         "lv_port.h": "c",
         "esp_chip_info.h": "c",
-        "gpio.h": "c"
+        "gpio.h": "c",
+        "sd_util.h": "c",
+        "atomic": "c"
     }
 }
