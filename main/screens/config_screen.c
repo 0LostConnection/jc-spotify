@@ -1,4 +1,9 @@
 #include "config_screen.h"
+#include "esp/display.h"
+#include "streamdeck_screen.h"
+#include "utils/buttons.h"
+#include "utils/styles.h"
+#include <string.h>
 
 // Definições de tamanho e quantidade de botões
 #define BUTTON_WIDTH 80
@@ -98,7 +103,7 @@ lv_obj_t *create_config_ui() {
     // --- Label Brilho ---
     brightness_label = lv_label_create(main_content_container);
     lv_obj_set_style_text_color(brightness_label, lv_color_white(), LV_PART_MAIN);
-    //lv_obj_set_style_text_font(brightness_label, &lv_font_montserrat_18, 0);
+    // lv_obj_set_style_text_font(brightness_label, &lv_font_montserrat_18, 0);
     update_brightness_label(brightness);
 
     // --- Botões de Brilho ---

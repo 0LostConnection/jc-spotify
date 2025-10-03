@@ -39,22 +39,3 @@ bool hid_send_shortcut(uint8_t modifiers, const uint8_t *keycodes, uint8_t keyco
         return false;
     }
 }
-
-// Envia teclas multimídia (consumer control), como volume, play, etc
-// Retorna true se enviado com sucesso, false caso contrário
-bool hid_send_consumer_key(uint16_t usage_id) {
-    if (!hid_mutex || !tud_mounted())
-        return false;
-
-    if (xSemaphoreTake(hid_mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
-        tud_hid_report(0, (uint8_t *)&usage_id, sizeof(usage_id));
-        vTaskDelay(pdMS_TO_TICKS(30));
-        uint16_t zero = 0;
-        tud_hid_report(0, (uint8_t *)&zero, sizeof(zero));
-        xSemaphoreGive(hid_mutex);
-        return true;
-    } else {
-        ESP_LOGW(TAG, "HID mutex timeout");
-        return false;
-    }
-}

@@ -1,4 +1,11 @@
 #include "streamdeck_screen.h"
+#include "class/hid/hid.h"
+#include "config_screen.h"
+#include "esp/display.h"
+#include "utils/buttons.h"
+#include "utils/hid_util.h"
+#include "utils/styles.h"
+#include <string.h>
 
 // Definições de tamanho e quantidade de botões
 #define BUTTON_WIDTH 80
