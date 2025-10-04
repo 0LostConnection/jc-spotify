@@ -1,6 +1,7 @@
 #include "buttons.h"
 #include "styles.h"
 #include <esp/display.h>
+#include <esp_log.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +9,8 @@
 // Onde o arquivo CSV será armazenado
 #define CSV_FILE_PATH "/sdcard/buttons.csv"
 #define MAX_BUTTONS 9
+
+static const char *TAG = "BUTTONS";
 
 // --- Funções Auxiliares ---
 
@@ -27,7 +30,7 @@ ACTION_TYPE get_action_type_from_string(const char *type_str) {
 void create_default_csv() {
     FILE *f = fopen(CSV_FILE_PATH, "w");
     if (f == NULL) {
-        printf("ERRO: Nao foi possivel criar o arquivo CSV em %s\n", CSV_FILE_PATH);
+        ESP_LOGE(TAG, "Nao foi possivel criar o arquivo CSV em %s", CSV_FILE_PATH);
         return;
     }
 
@@ -43,19 +46,19 @@ void create_default_csv() {
     fprintf(f, "SlctAll;SHORTCUT;CTRL_A\n");
 
     fclose(f);
-    printf("SUCESSO: Arquivo CSV padrao criado em %s\n", CSV_FILE_PATH);
+    ESP_LOGI(TAG, "Arquivo CSV padrao criado em %s", CSV_FILE_PATH);
 }
 
 // **Substitui a função get_button_actions**
 int read_button_actions_from_csv(bnt_action buttons[]) {
     FILE *f = fopen(CSV_FILE_PATH, "r");
     if (f == NULL) {
-        printf("AVISO: Arquivo CSV nao encontrado. Criando padrao...\n");
+        ESP_LOGW(TAG, "Arquivo CSV nao encontrado. Criando padrao...");
         create_default_csv();
         // Tenta abrir o arquivo recém-criado
         f = fopen(CSV_FILE_PATH, "r");
         if (f == NULL) {
-            printf("ERRO FATAL: Nao foi possivel abrir o arquivo padrao.\n");
+            ESP_LOGE(TAG, "Nao foi possivel abrir o arquivo padrao");
             return 0;
         }
     }
@@ -86,7 +89,7 @@ int read_button_actions_from_csv(bnt_action buttons[]) {
                 fields[i][49] = '\0';
             } else {
                 // Linha incompleta, ignora
-                printf("AVISO: Linha incompleta no CSV, ignorando...\n");
+                ESP_LOGW(TAG, "Linha incompleta no CSV, ignorando...");
                 goto next_line;
             }
         }
@@ -101,7 +104,7 @@ int read_button_actions_from_csv(bnt_action buttons[]) {
     }
 
     fclose(f);
-    printf("SUCESSO: %d botoes carregados do CSV.\n", count);
+    ESP_LOGI(TAG, "%d botoes carregados do CSV", count);
     return count;
 }
 
