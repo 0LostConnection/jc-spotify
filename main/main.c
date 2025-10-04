@@ -39,7 +39,7 @@ static const char *TAG = "STREAMDECK";
  *      - 270: 270 degree
  *
  */
-#define LVGL_PORT_ROTATION_DEGREE (90)
+#define LVGL_PORT_ROTATION_DEGREE (0)
 
 void boot_info();
 void setup_hid_usb();

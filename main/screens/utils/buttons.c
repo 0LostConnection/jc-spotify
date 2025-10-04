@@ -106,7 +106,6 @@ int read_button_actions_from_csv(bnt_action buttons[]) {
 
     fclose(f);
     ESP_LOGI(TAG, "%d botoes carregados do CSV", count);
-    sd_util_deinit();
     return count;
 }
 

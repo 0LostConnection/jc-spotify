@@ -11,7 +11,7 @@
 #define FORMAT_ON_BOOT true
 
 // HID Keyboard
-#define INIT_HID_ON_BOOT true
+#define INIT_HID_ON_BOOT false
 
 // LVGL
 #define INIT_LVGL_ON_BOOT true
