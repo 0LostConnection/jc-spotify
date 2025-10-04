@@ -8,16 +8,16 @@
 
 // Boot
 #define SHOW_BOOT_INFO true
-#define DELAYED_BOOT false
-#define DELAYED_BOOT_MS (6000)
+#define DELAYED_BOOT true
+#define DELAYED_BOOT_MS (10000)
 
 
 // SDcard
 #define INIT_SDCARD_ON_BOOT true
-#define FORMAT_ON_BOOT true
+#define FORMAT_ON_BOOT false
 
 // HID Keyboard
-#define INIT_HID_ON_BOOT false
+#define INIT_HID_ON_BOOT true
 
 // LVGL
 #define INIT_LVGL_ON_BOOT true

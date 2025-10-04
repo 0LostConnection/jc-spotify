@@ -12,7 +12,8 @@
 // HID report descriptor: Keyboard + Mouse
 const uint8_t hid_report_descriptor[] = {
     TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(HID_ITF_PROTOCOL_KEYBOARD)),
-    TUD_HID_REPORT_DESC_MOUSE(HID_REPORT_ID(HID_ITF_PROTOCOL_MOUSE))};
+    TUD_HID_REPORT_DESC_CONSUMER(HID_REPORT_ID(2)),
+};
 
 // String descriptor
 const char *hid_string_descriptor[5] = {
@@ -111,10 +112,10 @@ bool hid_send_consumer_key(uint16_t usage_id) {
         return false;
 
     if (xSemaphoreTake(hid_mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
-        tud_hid_report(0, (uint8_t *)&usage_id, sizeof(usage_id));
+        tud_hid_report(2, (uint8_t *)&usage_id, sizeof(usage_id));
         vTaskDelay(pdMS_TO_TICKS(30));
         uint16_t zero = 0;
-        tud_hid_report(0, (uint8_t *)&zero, sizeof(zero));
+        tud_hid_report(2, (uint8_t *)&zero, sizeof(zero));
         xSemaphoreGive(hid_mutex);
         return true;
     } else {
