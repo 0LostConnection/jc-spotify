@@ -30,21 +30,10 @@ static const char *TAG = "STREAMDECK";
 #define logSection(section) \
     ESP_LOGI(TAG, "\n\n************* %s **************\n", section);
 
-/**
- * @brief LVGL porting example
- * Set the rotation degree:
- *      - 0: 0 degree
- *      - 90: 90 degree
- *      - 180: 180 degree
- *      - 270: 270 degree
- *
- */
-#define LVGL_PORT_ROTATION_DEGREE (0)
-
 void boot_info();
-void setup_hid_usb();
-void sd_init();
-void setup();
+void init_hid_usb();
+void init_sdcard();
+void init_lvgl();
 
 void boot_info() {
 #if SHOW_BOOT_INFO
@@ -81,7 +70,7 @@ void boot_info() {
 #endif
 }
 
-void setup_hid_usb() {
+void init_hid_usb() {
 #if INIT_HID_ON_BOOT
     hid_util_setup_usb();
 #else
@@ -89,7 +78,7 @@ void setup_hid_usb() {
 #endif
 }
 
-void sd_init() {
+void init_sdcard() {
 #if INIT_SDCARD_ON_BOOT
     ESP_ERROR_CHECK(sd_util_init());
 #else
@@ -97,7 +86,7 @@ void sd_init() {
 #endif
 }
 
-void setup() {
+void init_lvgl() {
     logSection("Initialize panel device");
 
     ESP_LOGI(TAG, "Initialize panel device");
@@ -132,13 +121,15 @@ void setup() {
 }
 
 void app_main() {
-    vTaskDelay(pdMS_TO_TICKS(10000));
+#if DELAYED_BOOT
+    vTaskDelay(pdMS_TO_TICKS(DELAYED_BOOT_MS));
+#endif
     boot_info();
-    sd_init();
-    vTaskDelay(pdMS_TO_TICKS(5000));
-    setup_hid_usb();
+    init_sdcard();
     vTaskDelay(pdMS_TO_TICKS(1000));
-    setup();
+    init_hid_usb();
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    init_lvgl();
 }
 
 void loop() {
