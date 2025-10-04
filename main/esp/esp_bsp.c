@@ -29,7 +29,7 @@
 #include "display.h"
 #include "esp_bsp.h"
 
-static const char *TAG = "example";
+static const char *TAG = "Display";
 
 static const axs15231b_lcd_init_cmd_t lcd_init_cmds[] = {
     {0xBB, (uint8_t []){0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5A, 0xA5}, 8, 0},

@@ -3,6 +3,9 @@
 
 #include <stdbool.h>
 
+// Display
+#define DEBUG_SHOW_TOUCH_COORDINATES false
+
 // Boot
 #define SHOW_BOOT_INFO true
 
