@@ -1,6 +1,7 @@
 #include "buttons.h"
+#include "esp/display.h"
 #include "styles.h"
-#include <esp/display.h>
+#include "utils/sd_util.h"
 #include <esp_log.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,6 +106,7 @@ int read_button_actions_from_csv(bnt_action buttons[]) {
 
     fclose(f);
     ESP_LOGI(TAG, "%d botoes carregados do CSV", count);
+    sd_util_deinit();
     return count;
 }
 

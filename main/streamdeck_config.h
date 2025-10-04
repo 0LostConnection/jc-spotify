@@ -3,6 +3,17 @@
 
 #include <stdbool.h>
 
-#define FORMAT_ON_BOOT = (true)
+// Boot
+#define SHOW_BOOT_INFO true
+
+// SDcard
+#define INIT_SDCARD_ON_BOOT true
+#define FORMAT_ON_BOOT true
+
+// HID Keyboard
+#define INIT_HID_ON_BOOT true
+
+// LVGL
+#define INIT_LVGL_ON_BOOT true
 
 #endif
