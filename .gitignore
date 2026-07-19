@@ -1,8 +1,18 @@
-
+# Build / IDF
 /.pio
 /build
+/managed_components
+/sdkconfig
+/sdkconfig.JC3248W535EN
+/sdkconfig.old
 *.zip
+
+# Editor
 .vscode/c_cpp_properties.json
 .vscode/launch.json
-/example/.pio
-managed_components/
+
+# Secrets (copy from secrets.example.hpp)
+/main/secrets.hpp
+
+# Local PEM pair if regenerated (embedded copy lives in certs_pem.hpp)
+/main/spotify/certs/

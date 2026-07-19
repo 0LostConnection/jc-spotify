@@ -1,3 +1,3 @@
 cmake_minimum_required(VERSION 3.16.0)
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(streamdeck)
+project(jc3248w535en)

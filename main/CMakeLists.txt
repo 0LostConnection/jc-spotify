@@ -1,24 +1,38 @@
-# This file was automatically generated for projects
-# without default 'CMakeLists.txt' file.
-
-FILE(GLOB_RECURSE app_sources ${CMAKE_SOURCE_DIR}/main/*.*)
-idf_component_register(SRCS ${app_sources})
-
-# idf_component_register(
-#     SRCS
-#     main.c
-#     esp/esp_bsp.c
-#     esp/esp_lcd_axs15231b.c
-#     esp/esp_lcd_touch.c
-#     screens/config_screen.c
-#     screens/streamdeck_screen.c
-#     screens/utils/buttons.c
-#     screens/utils/styles.c
-
-#     # Estas são as pastas que contêm os arquivos de cabeçalho (.h)
-#     INCLUDE_DIRS
-#     .
-#     esp
-#     screens
-#     screens/utils
-# )
+idf_component_register(
+    SRCS
+        "main.cpp"
+        "board/display.cpp"
+        "board/touch.cpp"
+        "board/lcd_init_cmds.c"
+        "board/panel_hw.c"
+        "wifi/provision.cpp"
+        "spotify/tokens.cpp"
+        "spotify/auth_pkce.cpp"
+        "spotify/api.cpp"
+        "spotify/art.cpp"
+        "ui/status_ui.cpp"
+        "ui/player_ui.cpp"
+        "ui/icons.cpp"
+        "ui/fonts.cpp"
+    INCLUDE_DIRS
+        "."
+        "board"
+        "ui"
+        "wifi"
+        "spotify"
+    REQUIRES
+        nvs_flash
+        esp_wifi
+        esp_netif
+        esp_event
+        esp_http_server
+        esp_https_server
+        esp_http_client
+        esp-tls
+        mbedtls
+        mdns
+        json
+        esp_timer
+        esp_jpeg
+        esp_app_format
+)
