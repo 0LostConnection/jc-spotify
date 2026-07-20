@@ -39,6 +39,10 @@ bool s_library_reauth_done = false; /* only auto re-auth once per boot */
 char s_track_id[64]{};
 char s_track_uri[96]{}; /* spotify:track:… Prefer official URI from playback JSON. */
 char s_item_type[16]{};
+/* Only re-query /library/contains when the track changes (or after backoff). */
+char s_liked_uri[96]{};
+TickType_t s_library_backoff_until = 0;
+constexpr int kLibraryBackoffMs = 60000;
 
 void copy_json_str(const cJSON *obj, const char *key, char *out, size_t out_len) {
     out[0] = '\0';
@@ -277,6 +281,9 @@ esp_err_t api_check_liked(Tokens *tokens, const char *track_uri, bool *liked_out
     if (!s_library_ok) {
         return ESP_ERR_NOT_SUPPORTED;
     }
+    if (s_library_backoff_until != 0 && xTaskGetTickCount() < s_library_backoff_until) {
+        return ESP_ERR_INVALID_STATE; /* still in 429 backoff */
+    }
 
     /* Docs: GET /me/library/contains?uris=spotify%3Atrack%3A… (Feb 2026). */
     char uri_esc[160]{};
@@ -295,11 +302,17 @@ esp_err_t api_check_liked(Tokens *tokens, const char *track_uri, bool *liked_out
         }
         return ESP_ERR_NOT_SUPPORTED;
     }
+    if (status == 429) {
+        s_library_backoff_until = xTaskGetTickCount() + pdMS_TO_TICKS(kLibraryBackoffMs);
+        ESP_LOGW(TAG, "library contains rate-limited — backoff %d ms", kLibraryBackoffMs);
+        return ESP_ERR_INVALID_STATE;
+    }
     if (status < 200 || status >= 300) {
         ESP_LOGW(TAG, "library contains HTTP %d body=%.80s", status, resp);
         return ESP_FAIL;
     }
 
+    s_library_backoff_until = 0;
     cJSON *root = cJSON_Parse(resp);
     if (!root) {
         return ESP_FAIL;
@@ -336,6 +349,7 @@ esp_err_t api_fetch_playback(Tokens *tokens, Playback *out) {
         s_track_id[0] = '\0';
         s_track_uri[0] = '\0';
         s_item_type[0] = '\0';
+        s_liked_uri[0] = '\0';
         return ESP_OK;
     }
 
@@ -345,17 +359,25 @@ esp_err_t api_fetch_playback(Tokens *tokens, Playback *out) {
         std::snprintf(s_track_id, sizeof(s_track_id), "%s", out->track_id);
         s_shuffle = out->shuffle;
         if (s_track_uri[0] && std::strcmp(s_item_type, "track") == 0) {
-            bool liked = false;
-            if (api_check_liked(tokens, s_track_uri, &liked) == ESP_OK) {
-                out->liked = liked;
-                s_liked = liked;
-            } else {
-                /* Keep last known liked state if contains fails (don't wipe the heart). */
+            /* Cache: only hit /library/contains when the track URI changes. */
+            if (std::strcmp(s_liked_uri, s_track_uri) == 0) {
                 out->liked = s_liked;
+            } else {
+                bool liked = false;
+                const esp_err_t lerr = api_check_liked(tokens, s_track_uri, &liked);
+                if (lerr == ESP_OK) {
+                    out->liked = liked;
+                    s_liked = liked;
+                    std::snprintf(s_liked_uri, sizeof(s_liked_uri), "%s", s_track_uri);
+                } else {
+                    /* Keep last known liked state if contains fails (don't wipe the heart). */
+                    out->liked = s_liked;
+                }
             }
         } else {
             out->liked = false;
             s_liked = false;
+            s_liked_uri[0] = '\0';
         }
         return ESP_OK;
     }
@@ -518,6 +540,9 @@ esp_err_t api_set_liked(Tokens *tokens, const char *track_id, bool liked) {
     }
     if (status == 204 || (status >= 200 && status < 300)) {
         s_liked = liked;
+        if (uri[0]) {
+            std::snprintf(s_liked_uri, sizeof(s_liked_uri), "%s", uri);
+        }
         ESP_LOGI(TAG, "library %s %s ok", liked ? "save" : "remove", uri);
         return ESP_OK;
     }
