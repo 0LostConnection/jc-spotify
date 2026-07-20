@@ -28,6 +28,7 @@ namespace {
 constexpr char TAG[] = "spotify.api";
 constexpr char kApiHost[] = "https://api.spotify.com";
 constexpr int kPollMs = 2500;
+constexpr int kPollBackoffMs = 8000; /* after connect/timeout — avoid 15s×N death spiral */
 constexpr size_t kRespMax = 12288;
 
 /* Track last known shuffle/like for toggle commands without racing the UI. */
@@ -188,7 +189,17 @@ esp_err_t http_auth_request_retry(Tokens *tokens, const char *method, const char
                                   const char *body, char *resp, size_t resp_len, int *status_out) {
     esp_err_t err = http_auth_request(tokens, method, path, body, resp, resp_len, status_out);
     if (err == ESP_ERR_INVALID_STATE) {
+        /* Access token refreshed after 401 — retry once. */
         err = http_auth_request(tokens, method, path, body, resp, resp_len, status_out);
+    }
+    /* One connect retry only — each attempt can burn the full TLS timeout. */
+    if (err == ESP_ERR_HTTP_CONNECT) {
+        ESP_LOGW(TAG, "connect failed — retry once");
+        vTaskDelay(pdMS_TO_TICKS(500));
+        err = http_auth_request(tokens, method, path, body, resp, resp_len, status_out);
+        if (err == ESP_ERR_INVALID_STATE) {
+            err = http_auth_request(tokens, method, path, body, resp, resp_len, status_out);
+        }
     }
     return err;
 }
@@ -553,6 +564,7 @@ esp_err_t api_set_liked(Tokens *tokens, const char *track_id, bool liked) {
 [[noreturn]] void player_loop(Tokens tokens) {
     ESP_LOGI(TAG, "player loop start");
     TickType_t last_poll = 0;
+    int poll_ms = kPollMs;
 
     for (;;) {
         if (s_need_library_reauth) {
@@ -692,14 +704,16 @@ esp_err_t api_set_liked(Tokens *tokens, const char *track_id, bool liked) {
 
         if (refresh_soon) {
             last_poll = 0;
+            poll_ms = kPollMs;
         }
 
         const TickType_t now = xTaskGetTickCount();
-        if (last_poll == 0 || (now - last_poll) >= pdMS_TO_TICKS(kPollMs)) {
+        if (last_poll == 0 || (now - last_poll) >= pdMS_TO_TICKS(poll_ms)) {
             last_poll = now;
             Playback pb{};
             const esp_err_t perr = api_fetch_playback(&tokens, &pb);
             if (perr == ESP_OK) {
+                poll_ms = kPollMs;
                 ui::PlayerView view{};
                 view.is_playing = pb.is_playing;
                 view.shuffle = pb.shuffle;
@@ -722,10 +736,8 @@ esp_err_t api_set_liked(Tokens *tokens, const char *track_id, bool liked) {
                             ui::set_player_cover(art.pixels, art.w, art.h);
                             board::display::unlock();
                         } else {
-                            ESP_LOGW(TAG, "art load failed");
-                            board::display::lock(0);
-                            ui::clear_player_cover();
-                            board::display::unlock();
+                            /* Keep previous cover; next poll retries the new URL. */
+                            ESP_LOGW(TAG, "art load failed — keeping previous cover");
                         }
                     }
                 } else if (art_current_url()[0]) {
@@ -736,6 +748,7 @@ esp_err_t api_set_liked(Tokens *tokens, const char *track_id, bool liked) {
                 }
             } else {
                 ESP_LOGW(TAG, "poll failed: %s", esp_err_to_name(perr));
+                poll_ms = kPollBackoffMs;
             }
         }
 

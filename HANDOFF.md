@@ -1,8 +1,8 @@
 # Handoff: JC3248W535EN Spotify Miniplayer
 
-**Date:** 2026-07-19  
+**Date:** 2026-07-20  
 **Board:** JC3248W535EN (ESP32-S3, 320×480 AXS15231B QSPI + touch, 16MB flash, 8MB OPI PSRAM)  
-**Repo:** `/home/lost/Projects/JC3248W535EN`  
+**Repo:** `/home/geovane/Projects/jc-spotify`  
 **Product goal:** Landscape Spotify Connect remote (play/pause, shuffle, like, devices, cover art, settings).  
 **Plan doc:** [docs/SPOTIFY_PLAN.md](docs/SPOTIFY_PLAN.md)
 
@@ -17,6 +17,7 @@
 | Touch (swap_xy + mirror for landscape) | Works with player UI |
 | WiFi SoftAP captive portal | Works (`JC-Spotify-Setup` → `http://192.168.4.1`) |
 | WiFi STA + NVS creds | Works (SSID `"."` is valid — do not block it) |
+| STA runtime reconnect | **Fixed** — after first IP, reconnect forever (was capped at 8 tries) |
 | Input sanitize (trim / CR-LF / length) | Done |
 | Spotify PKCE + HTTPS callback | **Works end-to-end** |
 | Spotify Client ID in `secrets.hpp` | Set (gitignored) |
@@ -25,9 +26,11 @@
 | Settings | **Works** — brightness, system info, factory reset (WiFi+Spotify) |
 | Cover art | **Works** — JPEG → RGB565 in **rounded** frame (static; no spin) |
 | CJK / symbol fonts | **Works** — Source Han SC 16 fallback + `LV_SYMBOL_*` (RAM font copies) |
+| Library contains rate limits | **Mitigated** — cache per track URI + 60s backoff on HTTP 429 |
+| Transient TLS/DNS blips | **Mitigated** — one connect retry, 8s poll backoff; recovers on its own |
 | Repo layout | Cleaned — no vendored `libraries/lvgl`, no StreamDeck leftovers |
 
-**Current app behavior after flash:** display → `net` task → WiFi → auth (skip login UI if refresh token in NVS) → landscape player → poll `/me/player` ~2.5s + cover art fetch + handle button / settings commands.
+**Current app behavior after flash:** display → `net` task → WiFi → auth (skip login UI if refresh token in NVS) → landscape player → poll `/me/player` ~2.5s (8s after failures) + cover art fetch + handle button / settings commands.
 
 ---
 
@@ -121,17 +124,23 @@ Keep these; they were painful to get right:
 [`spotify/api.cpp`](main/spotify/api.cpp) + [`ui/player_ui.cpp`](main/ui/player_ui.cpp):
 
 - Poll `GET /v1/me/player` on the `net` task; UI updates under `board::display::lock`.  
+- Default poll **2.5s**; after `ESP_ERR_HTTP_CONNECT` / poll failure use **8s** backoff, then return to 2.5s on success.  
+- One extra retry on `ESP_ERR_HTTP_CONNECT` (each TLS attempt can burn the full timeout — do not stack many retries).  
 - Commands from LVGL → volatile cmd id → worker (never do HTTPS on the LVGL task).  
 - Controls: prev · play/pause · next · shuffle · like (icon buttons).  
 - Library APIs (Feb 2026 migration — old `/me/tracks*` removed):
   - Save/remove: `PUT/DELETE /v1/me/library?uris=spotify%3Atrack%3A…` (query param required — JSON body returns **400 Missing required field: uris**)
-  - Contains: `GET /v1/me/library/contains?uris=`
+  - Contains: `GET /v1/me/library/contains?uris=` — **only when track URI changes** (cached in `s_liked_uri`); **60s backoff** on HTTP 429
   - Prefer `item.uri` from playback JSON.  
 - Like only for `item.type == "track"` (not podcasts).  
-- Cover art from `album.images` / `item.images` (~300px JPEG) via [`spotify/art.*`](main/spotify/art.cpp).  
+- Cover art from `album.images` / `item.images` (~300px JPEG) via [`spotify/art.*`](main/spotify/art.cpp) — **8s** download timeout; on failure **keep previous cover** (retry next poll).  
 - **Premium required** for playback control.
 
 **Library scopes:** older tokens without `user-library-*` get HTTP **403**. Inspect **status** even when `http_auth_request` returns `ESP_FAIL` (403 is not 2xx). Stop polling library APIs and run **one** PKCE re-auth (`show_dialog=true`).
+
+**Transient network (expected):** TLS `-0x7280` (`MBEDTLS_ERR_SSL_CONN_EOF`), `getaddrinfo` **202** (`EAI_FAIL`), `Connection timed out before data was ready`, `select() timeout` → `ESP_ERR_HTTP_CONNECT`. Cert bundle is fine. Track changes are heavier (player + contains + art). UI may freeze briefly; polls resume when the radio/DNS recovers. Not a stuck task.
+
+**WiFi STA** ([`wifi/provision.cpp`](main/wifi/provision.cpp)): `kStaMaxRetry` (8) applies only to **first join**. After `s_ever_got_ip`, always call `esp_wifi_connect()` on `STA_DISCONNECTED` (old code stopped forever after 8 drops → player looked dead until reboot).
 
 ---
 
@@ -182,15 +191,16 @@ LVGL comes from **IDF Component Manager** (`managed_components/`, gitignored) �
 
 ## Flash / port notes
 
-Device usually `/dev/ttyACM0` (`303a:1001`); after resets it may appear as `/dev/ttyACM1`. Owned by `root:uucp`:
+Device usually `/dev/ttyACM0` (`303a:1001`); after resets it may appear as `/dev/ttyACM1`. On this host the dialout group is used:
 
 ```bash
 export PATH="$HOME/.platformio/penv/bin:$PATH"
-cd /home/lost/Projects/JC3248W535EN
-sg uucp -c 'pio run -e JC3248W535EN -t upload --upload-port /dev/ttyACM0'
+cd /home/geovane/Projects/jc-spotify
+sg dialout -c 'pio run -e JC3248W535EN -t upload --upload-port /dev/ttyACM0'
+sg dialout -c 'pio device monitor --port /dev/ttyACM0'
 ```
 
-Permanent: `sudo usermod -aG uucp "$USER"` then re-login.
+Permanent: `sudo usermod -aG dialout "$USER"` then re-login.
 
 Serial monitor from agents often fails (no TTY); use a short Python `serial` read (reopen on disconnect during boot loops) or a real terminal.
 
@@ -214,6 +224,9 @@ After `sdkconfig.defaults` changes: `rm -f sdkconfig.JC3248W535EN` then rebuild.
 | Blank boxes for `↓` / `—` / Chinese | Montserrat has no those glyphs | `LV_SYMBOL_*` + ASCII for chrome; Source Han CJK fallback for metadata |
 | Boot loop: Cache disabled / write back to flash | Wrote `.fallback` onto `const` Montserrat in flash | Copy font structs to **RAM** (`ui/fonts.*`) then set fallback |
 | Like button does nothing | Spotify **removed** `/me/tracks*`; JSON body to `/me/library` → 400 missing `uris` | Use **query** `PUT/DELETE /me/library?uris=` |
+| `/me/library/contains` HTTP 429 every ~2.5s | Contains called on every poll for same track | Cache liked by track URI; 60s backoff on 429 |
+| Player frozen until reboot after WiFi flap | STA reconnect stopped after 8 `DISCONNECTED` events | After first IP, reconnect forever (`s_ever_got_ip`) |
+| Long freeze on track change then recover | TLS/DNS stall + 15s timeouts; art clear on fail | 8s art timeout; keep old cover; 8s poll backoff; one connect retry |
 
 ---
 
@@ -229,15 +242,17 @@ After `sdkconfig.defaults` changes: `rm -f sdkconfig.JC3248W535EN` then rebuild.
 - Parse best ~300px image URL from playback JSON (`album.images`, else `item.images`).  
 - On URL change (still on `net` task): HTTPS GET (public CDN, no Bearer) → `esp_jpeg` TJpgDec → RGB565 in PSRAM.  
 - Scale: 640→1/4, 300→1/2, smaller→1/1; long side capped ~160; UI scales into 222×210 rounded frame.  
+- Download timeout **8s**; failed download does **not** clear the previous cover.  
 - **No continuous rotation** — `full_refresh` + bounce remap makes LVGL transforms too expensive (UI lag).  
 - Dep: `espressif/esp_jpeg` in [`main/idf_component.yml`](main/idf_component.yml).
 
 ## Suggested next session
 
-1. Polish (errors, offline device).  
+1. Optional: defer cover art off the poll critical path (pending URL + independent retry) so metadata stays fresh during CDN stalls.  
 2. Optional: persist brightness to NVS across reboot.  
-3. Optional: fuller CJK coverage if rare characters still box (custom font subset).  
-4. Optional: PC helper if HTTPS + `.local` is painful on some phones.
+3. Optional: offline / reconnecting UI state when polls fail.  
+4. Optional: fuller CJK coverage if rare characters still box (custom font subset).  
+5. Optional: PC helper if HTTPS + `.local` is painful on some phones.
 
 If HTTPS + `.local` becomes painful on some phones: fallback is a PC helper with `http://127.0.0.1:PORT/callback` posting refresh token to the device.
 
@@ -248,5 +263,6 @@ If HTTPS + `.local` becomes painful on some phones: fallback is a PC helper with
 - PlatformIO: `~/.platformio/penv/bin/pio`  
 - ESP-IDF 5.3.1, LVGL 9.3.0, esp_lvgl_port 2.6.3, axs15231b 2.1.0, mdns, esp_jpeg  
 - Device MAC: `20:6e:f1:98:d4:88`  
-- Home WiFi SSID: `"."` (valid)  
-- Last known STA IP: `10.0.0.5`  
+- Home WiFi SSID: `Laboratório` (also tested with `"."`)  
+- Last known STA IP: `192.168.0.100`  
+- Serial: `sg dialout -c 'pio device monitor --port /dev/ttyACM0'`  

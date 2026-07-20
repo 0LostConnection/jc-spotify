@@ -50,7 +50,7 @@ esp_err_t http_download(const char *url, uint8_t *buf, size_t buf_len, size_t *o
 
     esp_http_client_config_t cfg{};
     cfg.url = url;
-    cfg.timeout_ms = 15000;
+    cfg.timeout_ms = 8000; /* keep track-change path snappy; retry later if CDN is slow */
     cfg.crt_bundle_attach = esp_crt_bundle_attach;
     cfg.max_redirection_count = 5;
     cfg.buffer_size = 2048;

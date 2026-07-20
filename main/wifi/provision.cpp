@@ -38,6 +38,7 @@ httpd_handle_t s_httpd = nullptr;
 TaskHandle_t s_dns_task = nullptr;
 volatile bool s_dns_run = false;
 bool s_sta_connected = false;
+bool s_ever_got_ip = false; /* after first IP, keep reconnecting forever */
 
 /* Minimal captive-portal HTML (portrait-agnostic). */
 constexpr char kIndexHtml[] =
@@ -292,11 +293,16 @@ void on_wifi(void *, esp_event_base_t base, int32_t id, void *data) {
         esp_wifi_connect();
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
         s_sta_connected = false;
-        if (s_retry < kStaMaxRetry) {
+        ++s_retry;
+        if (s_ever_got_ip) {
+            /* Runtime drop: never give up — kStaMaxRetry is only for first join. */
+            ESP_LOGW(TAG, "STA dropped — reconnecting (attempt %d)", s_retry);
             esp_wifi_connect();
-            ++s_retry;
+        } else if (s_retry <= kStaMaxRetry) {
             ESP_LOGW(TAG, "STA retry %d/%d", s_retry, kStaMaxRetry);
+            esp_wifi_connect();
         } else if (s_wifi_events) {
+            ESP_LOGE(TAG, "STA join failed after %d tries", kStaMaxRetry);
             xEventGroupSetBits(s_wifi_events, kFail);
         }
     } else if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
@@ -304,6 +310,7 @@ void on_wifi(void *, esp_event_base_t base, int32_t id, void *data) {
         ESP_LOGI(TAG, "got ip " IPSTR, IP2STR(&event->ip_info.ip));
         s_retry = 0;
         s_sta_connected = true;
+        s_ever_got_ip = true;
         if (s_wifi_events) {
             xEventGroupSetBits(s_wifi_events, kGotIp);
         }
@@ -473,6 +480,7 @@ esp_err_t start() {
             xEventGroupClearBits(s_wifi_events, kGotIp | kFail);
         }
         s_retry = 0;
+        s_ever_got_ip = false;
         return start_portal();
     }
 
